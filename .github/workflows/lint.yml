@@ -1,0 +1,66 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install linters
+        run: pip install flake8 pylint bandit
+      - name: Run flake8
+        run: flake8 src/python-app/ --max-line-length=120
+      - name: Run bandit (security linter)
+        run: bandit -r src/python-app/
+
+  lint-javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install ESLint
+        run: npm install -g eslint
+      - name: Run ESLint on Node.js app
+        run: eslint src/nodejs-app/ || true
+      - name: Run ESLint on TypeScript app
+        run: cd src/typescript-app && npm install && npx eslint src/ || true
+
+  lint-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Run go vet
+        run: cd src/go-app && go vet ./...
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - name: Run golangci-lint
+        run: cd src/go-app && golangci-lint run || true
+
+  lint-ruby:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+      - name: Install RuboCop
+        run: gem install rubocop
+      - name: Run RuboCop
+        run: rubocop src/ruby-app/ || true
